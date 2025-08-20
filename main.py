@@ -15,6 +15,6 @@ clean.process_csv('devset_replaced.csv', 'devset_cleaned.csv')
 spacy_parse.parse('devset_cleaned.csv', 'devset_spacy')
 
 # Run the probes
-experiment.run_experiment('devset_spacy_100.csv', '/Users/simonchervenak/Documents/GitHub/structural-probes') # 'structural_probes')
+experiment.run_experiment('devset_spacy_100.csv', 'structural_probes')
 
 # Analyze results in results.ipynb
