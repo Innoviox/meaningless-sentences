@@ -32,6 +32,7 @@ def parse_ccgbank(ccg_directory='ccgbank', min_sentence_length=5, max_sentence_l
     tags = defaultdict(list)
     words = defaultdict(lambda: defaultdict(int))
 
+    all_sents = []
     for file in tqdm.tqdm(files):
         with open(file) as f:
             for line in f.readlines():
@@ -39,18 +40,14 @@ def parse_ccgbank(ccg_directory='ccgbank', min_sentence_length=5, max_sentence_l
                 for word, c1, c2 in sentence:
                     if word not in tags[(c1, c2)]:
                         tags[(c1, c2)].append(word) # sets aren't hashable
+                    words[word] = defaultdict(int)
                     for word2, c12, c22 in sentence:
                         if word != word2:
                             words[word][word2] += 1
                             words[word2][word] += 1
 
-    all_sents = []
-    for file in tqdm.tqdm(files):
-        with open(file) as f:
-            for line in f.readlines():
-                p = parse(line)
-                if len(p) >= min_sentence_length and len(p) <= max_sentence_length:
-                    all_sents.append(p)
+                if len(sentence) >= min_sentence_length and len(sentence) <= max_sentence_length:
+                    all_sents.append(sentence)
 
     sents = []
     for idx, sent in enumerate(all_sents):
@@ -97,7 +94,7 @@ class Replacer:
                 total += self.get_llr(token1, token2)
         return total
 
-    def replace(self, word, c1, c2):
+    def can_replace(self, word, c1, c2):
         if word in ["n't", "'s", "'m", "to", "%"]:
             return False
         if c1 in [r'(S[dcl]\NP)/(S[b]\NP)', 'NP[nb]/N', r'(NP\NP)/NP', 'conj', ',', '.',  r'(S[b]\NP)/(S[adj]\NP)', r'(S[dcl]\NP)/(S[ng]\NP)', r'(NP\NP)/(NP\NP)', r'(S[dcl]\NP)/(S[pss]\NP)']:
@@ -110,7 +107,7 @@ class Replacer:
         sent = self.sents[sent_id]
         repl = []
         for word, c1, c2 in sent:
-            if not self.replace(word, c1, c2):
+            if not self.can_replace(word, c1, c2):
                 continue
             else:
                 w = None
@@ -124,7 +121,7 @@ class Replacer:
         new_sent = []
         i = 0
         for word, c1, c2 in sent:
-            if not self.replace(word, c1, c2):
+            if not self.can_replace(word, c1, c2):
                 new_sent.append(word)
             else:
                 new_sent.append(repls[i])
@@ -140,7 +137,7 @@ class Replacer:
     def replace(self, file, outfile='devset.csv'):
         rows = []
         with open(file) as devset:
-            reader = csv.DictReader(devset)
+            reader = list(csv.DictReader(devset))
             for row in tqdm.tqdm(reader):
                 sent_id = self.find_sent(row["Original Sentence"])
                 if sent_id is None:

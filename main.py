@@ -4,7 +4,7 @@ import spacy_parse
 import experiment
 
 # Parse ccgbank (unnecessary if the pickle files already exist)
-# ccg.parse_ccgbank()
+ccg.parse_ccgbank()
 
 # Generate meaningless sentences
 replacer = ccg.Replacer()
